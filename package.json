@@ -1,0 +1,22 @@
+{
+  "name": "workbench",
+  "version": "1.0.0",
+  "description": "",
+  "main": "workcore/index.mjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "archiver": "^6.0.1",
+    "axios": "^1.5.1",
+    "cli-table": "^0.3.11",
+    "colors": "^1.4.0",
+    "extract-zip": "^2.0.1",
+    "inquirer": "^9.2.11",
+    "nodemon": "^3.0.1",
+    "yargs": "^17.7.2"
+  }
+}
