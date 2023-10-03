@@ -1,5 +1,4 @@
-
-const { spawn } = require('child_process');
+const { spawn, execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const colors = require('colors');
@@ -35,7 +34,6 @@ class ErrorLogger {
 }
 
 const errorLogger = new ErrorLogger();
-
 const { argv } = yargs
   .options('work', {
     alias: 'w',
@@ -49,56 +47,65 @@ const sourceDirectories = [
   path.join(__dirname, "../../Works", localDoWork, 'gamemodes'),
   path.join(__dirname, "../../Works", localDoWork, 'filterscripts'),
 ];
-
 const isWindows = process.platform === 'win32';
+const workerdir = path.join(__dirname, '../../Works', localDoWork, 'pawno')
 const compileCommand = isWindows
-  ? path.join(__dirname, '../../Works', localDoWork, 'pawno/pawncc.exe')
-  : path.join(__dirname, '../../Works', localDoWork, 'pawno/pawncc');
+    ? path.join(workerdir, 'pawncc.exe')
+    : path.join(workerdir, 'pawncc')
+if (fs.existsSync(compileCommand)) {
+  console.log("iniciando compilador na plataforma : " + process.platform)
+  const compileCommand = isWindows
+    ? path.join(workerdir, 'pawncc.exe')
+    : path.join(workerdir, 'pawncc');
 
-if (!fs.existsSync(path.join(__dirname, '../../Works', localDoWork, 'pawno'))) {
-  console.log('pasta pawno não encontrada. Criando uma...');
-  fs.copyFileSync("./pawno", path.join(__dirname, '../../Works', localDoWork, 'pawno'), (err) => {
-    if (err) {
+  // Verifica se a pasta 'pawno' existe e a cria se não existir
+  if (!fs.existsSync(workerdir)) {
+    console.log('pasta pawno não encontrada. Criando uma...');
+    try {
+      fs.copyFileSync("./workcore/core/pawno", workerdir);
+      console.log('pasta pawno criada com sucesso.');
+
+    } catch (err) {
       console.error(`Erro ao tentar criar a pasta pawno básica: ${err.message}`);
-      return process.exit(1);
+      return process.exit(1)
     }
-    console.log('pasta pawno criada com sucesso.');
-  })
-}
+  }
 
-if (!compileCommand) {
-  console.log('Arquivo não encontrado. Copiando...');
+  // Verifica se o executável de compilação 'pawncc' existe e o copia se não existir
+  if (!fs.existsSync(compileCommand)) {
+    console.log('Arquivo não encontrado. Copiando...');
 
-  // Copiar o arquivo a partir de um local existente para o destino
-  const sourcePath = isWindows
-    ? './pawno/pawncc.exe'
-    : './pawno/pawncc';
+    // Copiar o arquivo a partir de um local existente para o destino
+    const sourcePath = isWindows
+      ? './workcore/core/pawno/pawncc.exe'
+      : './workcore/core/pawno/pawncc';
 
-  fs.copyFile(sourcePath, fileToCheck, (err) => {
-    if (err) {
-      console.error(`Erro ao copiar o arquivo: ${err.message}`);
-      return;
-    }
-    if (!isWindows) {
-      try {
-        // Executa o comando chmod para dar permissão 777 ao arquivo.
-        execSync(`chmod 777 ${compileCommand}`);
-
-        console.log('Permissão 777 concedida ao pawncc com sucesso.');
-      } catch (error) {
-        console.error('Erro ao conceder permissão 777 ao pawncc, conceda a permissão manualmente:', error.message);
-        return process.exit(1);
+    fs.copyFile(sourcePath, compileCommand, (err) => {
+      if (err) {
+        console.error(`Erro ao copiar o arquivo: ${err.message}`);
+        return;
       }
-    }
-    console.log('Arquivo copiado com sucesso.');
-    console.log('Continuando com o código...');
-  });
-}
+      if (!isWindows) {
+        try {
+          // Executa o comando chmod para dar permissão 777 ao arquivo.
+          execSync(`chmod 777 ${compileCommand}`);
 
+          console.log('Permissão 777 concedida ao pawncc com sucesso.');
+        } catch (error) {
+          console.error('Erro ao conceder permissão 777 ao pawncc, conceda a permissão manualmente:', error.message);
+          return process.exit(1);
+        }
+      }
+      console.log('Arquivo copiado com sucesso.');
+      console.log('Continuando com o código...');
+    });
+  }
+}
 console.log(
   `==================== [ INICIANDO NOVA COMPILAÇÃO ] =====================`.magenta
 );
 
+// Função para compilar um arquivo
 const compileFile = async (filePath, sourceDirectory) => {
   const compileProcess = spawn(compileCommand, [
     filePath,
@@ -121,7 +128,6 @@ const compileFile = async (filePath, sourceDirectory) => {
 
   compileProcess.stderr.on('data', (data) => {
     compileError.push(data.toString());
-    // console.error(data.toString().red);
   });
 
   await new Promise((resolve) => {
@@ -141,6 +147,7 @@ const compileFile = async (filePath, sourceDirectory) => {
   });
 };
 
+// Função para compilar todos os arquivos nas pastas de origem
 const compileAll = async () => {
   for (const sourceDirectory of sourceDirectories) {
     if (!fs.existsSync(sourceDirectory)) {
@@ -162,4 +169,5 @@ const compileAll = async () => {
   errorLogger.printErrors();
 };
 
+// Inicia a compilação de todos os arquivos
 compileAll();

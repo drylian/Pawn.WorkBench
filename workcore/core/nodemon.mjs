@@ -5,10 +5,10 @@ import { exec } from 'child_process';
 
 export const NodemonStart = async (type, WorkBench) => {
   // Função para executar o comando de compilação quando as pastas são editadas
+  const buildFile = './workcore/core/compiler.js';
 
   const compileOnChange = () => {
-        const buildFile = './workcore/core/compiler.js';
-    const command = `node ${buildFile} -w Works/${WorkBench}`;
+    const command = `node ${buildFile} -w ${WorkBench}`;
 
     exec(command, (error, stdout, stderr) => {
       if (error) {
@@ -31,7 +31,6 @@ export const NodemonStart = async (type, WorkBench) => {
   };
 
   if (type == "desenvolver") {
-    const buildFile = './workcore/core/compiler.js';
 
     // Inicie o Nodemon para monitorar as pastas
     nodemon({
@@ -44,10 +43,10 @@ export const NodemonStart = async (type, WorkBench) => {
       delay: 1000, // Tempo de atraso para evitar compilação duplicada
     });
 
-    // Ouça o evento 'restart' do Nodemon e execute a compilação
+    // // Ouça o evento 'restart' do Nodemon e execute a compilação
     nodemon.on('restart', () => {
       console.log('Arquivos alterados. Reiniciando compilação...');
-      compileOnChange();
+      // compileOnChange();
     });
   } else {
     const buildFile = './workcore/core/build.js';
